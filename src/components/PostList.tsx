@@ -8,9 +8,9 @@ export interface Post {
     title: string;
     content: string;
     image_url: string;
-    avatar_url: string | null;
-    likes: number;
     created_at: string;
+    avatar_url: string;
+    likes: number;
 }
 
 const fetchPosts = async (): Promise<Post[]> => {
@@ -39,7 +39,7 @@ const PostList = () => {
   return (
     <div>
         {data?.map((post) => (
-            <PostItem key={post.id} post={post}/>
+            <PostItem post={post}/>
         ))}
     </div>
   )

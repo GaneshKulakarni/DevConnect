@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { Post } from './PostList';
-import { MessageCircle, Send, Bookmark } from 'lucide-react';
+import { MessageCircle, Heart } from 'lucide-react';
 import LikeButton from './LikeButton';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Props {
     post: Post;
@@ -12,72 +12,65 @@ const PostItem = ({ post }: Props) => {
     const [likeCount, setLikeCount] = useState(0);
 
     return (
-        <div className="bg-white border border-gray-200 w-full max-w-md mx-auto">
-            <Link to={`/post/${post.id}`} className="block">
-                {/* Header: Avatar and Username */}
-                <div className="flex items-center p-3">
-                    {post.avatar_url ? (
-                        <img 
-                            src={post.avatar_url} 
-                            alt="User avatar"
-                            className="w-8 h-8 rounded-full mr-3 flex-shrink-0 object-cover"
-                        />
-                    ) : (
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-400 via-pink-500 to-orange-400 rounded-full mr-3 flex-shrink-0"></div>
-                    )}
-                    <h3 className="text-sm font-semibold text-gray-900">
-                        {post.title}
-                    </h3>
-                </div>
-
-                {/* Image - Square 1:1 */}
+        <Link to={`/post/${post.id}`}>
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 hover:shadow-xl hover:shadow-black/50 transition-all duration-300 w-full max-w-sm backdrop-blur-sm">
+                {/* Image */}
                 {post.image_url && (
-                    <div className="w-full aspect-square bg-gray-100">
+                    <div className="w-full aspect-square bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden relative group">
                         <img 
                             src={post.image_url} 
                             alt={post.title} 
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
                 )}
-            </Link>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between p-3">
-                <div className="flex items-center gap-4">
-                    <LikeButton postId={post.id} onLikeCountChange={setLikeCount} />
-                    <Link to={`/post/${post.id}`}>
-                        <MessageCircle className="w-6 h-6 cursor-pointer hover:text-gray-500 transition-colors" />
-                    </Link>
-                    <Send className="w-6 h-6 cursor-pointer hover:text-gray-500 transition-colors" />
-                </div>
-                <Bookmark className="w-6 h-6 cursor-pointer hover:text-gray-500 transition-colors" />
-            </div>
+                {/* Content */}
+                <div className="p-5 space-y-4">
+                    {/* Header with Avatar */}
+                    <div className="flex items-center gap-3">
+                        {post.avatar_url ? (
+                            <img 
+                                src={post.avatar_url} 
+                                alt="User avatar"
+                                className="w-9 h-9 rounded-full ring-1 ring-slate-700 object-cover flex-shrink-0"
+                            />
+                        ) : (
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex-shrink-0"></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-white truncate">
+                                {post.title}
+                            </h3>
+                            <p className="text-xs text-gray-500">2h ago</p>
+                        </div>
+                    </div>
 
-            {/* Likes Count */}
-            <div className="px-3 pb-2">
-                <p className="text-sm font-semibold text-gray-900">
-                    {likeCount} {likeCount === 1 ? 'like' : 'likes'}
-                </p>
-            </div>
-
-            <Link to={`/post/${post.id}`} className="block">
-                {/* Caption */}
-                <div className="px-3 pb-3">
-                    <p className="text-sm text-gray-900">
-                        <span className="font-semibold mr-2">{post.title}</span>
-                        <span className="text-gray-700">
+                    {/* Title and Content Preview */}
+                    <div className="space-y-2">
+                        <p className="text-sm text-gray-300 line-clamp-2 leading-relaxed">
                             {post.content.length > 100 ? post.content.slice(0, 100) + '...' : post.content}
-                        </span>
-                    </p>
-                </div>
+                        </p>
+                    </div>
 
-                {/* Timestamp */}
-                <div className="px-3 pb-3">
-                    <p className="text-xs text-gray-400 uppercase">2 hours ago</p>
+                    {/* Stats and Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                        <div className="flex items-center gap-4 text-gray-400">
+                            <div className="flex items-center gap-1 text-xs">
+                                <Heart className="w-4 h-4" />
+                                <span>{likeCount}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                                <MessageCircle className="w-4 h-4" />
+                                <span>0</span>
+                            </div>
+                        </div>
+                        <LikeButton postId={post.id} onLikeCountChange={setLikeCount} />
+                    </div>
                 </div>
-            </Link>
-        </div>
+            </div>
+        </Link>
     );
 }
 

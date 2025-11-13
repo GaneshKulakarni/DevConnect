@@ -8,19 +8,17 @@ interface Props {
 }
 
 interface PostWithCommunity extends Post {
-  // This interface expects a 'communities' object with a 'name' property
   communities: { 
     name: string;
   };
 }
 
-// --- Data Fetching Function (CORRECTED SELECT) ---
 export const fetchCommunityPost = async (
   communityId: number
 ): Promise<PostWithCommunity[]> => {
   const { data, error } = await supabase
     .from("Posts")
-    .select("*, Communities(name)") // ✅ FIX: Explicitly selecting 'name' from 'Communities'
+    .select("*, Communities(name)")
     .eq("community_id", communityId)
     .order("created_at", { ascending: false });
 
@@ -28,7 +26,6 @@ export const fetchCommunityPost = async (
   return data as PostWithCommunity[]; 
 };
 
-// --- Component Logic (Revised for Safety) ---
 export const CommunityDisplay = ({ communityId }: Props) => {
   const { data, error, isLoading } = useQuery<PostWithCommunity[], Error>({
     queryKey: ["communityPost", communityId],
@@ -45,27 +42,34 @@ export const CommunityDisplay = ({ communityId }: Props) => {
       </div>
     );
   
-  // ✅ Safety Check: Safely attempt to get the community name using optional chaining
   const communityName = data?.[0]?.communities?.name;
 
   return (
     <div>
-      {/* Title Rendering: Displays fetched name or a fallback */}
-      <h2 className="text-3xl font-bold mb-6 text-center">
-        {communityName ? `${communityName} Community Posts` : 'Community Posts'}
-      </h2>
+      {/* Title is centered */}
+      <div className="mb-10 text-center justify-center"> 
+        <h2 className="text-4xl font-bold font-mono text-white mb-2">
+            <span className="text-cyan-400">~/</span>{communityName ? communityName.toLowerCase().replace(/\s/g, '_') : 'community_feed'}
+        </h2>
+        <p className="text-gray-400 font-mono text-sm">
+            posts from this community
+        </p>
+      </div>
 
       {data && data.length > 0 ? (
-        <div className="flex flex-wrap gap-6 justify-center">
+        
+        <div className="mx-auto flex flex-col gap-6">
           {data.map((post) => (
             <PostItem key={post.id} post={post} />
           ))}
         </div>
       ) : (
-        <p className="text-center text-gray-400">
-          No posts found in this community.
-        </p>
+        <div className="text-center text-gray-500 font-mono py-12">
+            No posts found in this community yet.
+        </div>
       )}
     </div>
   );
 };
+
+export default CommunityDisplay;

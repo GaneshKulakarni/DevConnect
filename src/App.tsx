@@ -7,6 +7,7 @@ import PostPage from './pages/PostPage.tsx'
 import CreateCommunityPage from './pages/CreateCommunityPage.tsx'
 import CommunityList from './components/CommunityList.tsx'
 import {CommunityPage} from './pages/CommunityPage.tsx'
+import { CommunitiesPage } from './pages/CommunitiesPage.tsx'
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
             <Route path="/create" element={<CreatePostPage />} />
             <Route path="/post/:id" element={<PostPage />} />
             <Route path="/communities/create" element={<CreateCommunityPage />} />
-            <Route path="/communities" element={<CommunityList />} />
+            <Route path="/communities" element={<CommunitiesPage />} />
             <Route path="/communities/:id" element={<CommunityPage />} />
           </Routes>
         </div>

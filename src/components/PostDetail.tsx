@@ -96,7 +96,15 @@ const PostDetail = ({ postId }: PostDetailProps) => {
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                 {/* Header: Avatar and Title */}
                 <div className="flex items-center p-4 border-b border-gray-200">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-400 via-pink-500 to-orange-400 rounded-full mr-3 flex-shrink-0"></div>
+                    {post.avatar_url ? (
+                        <img 
+                            src={post.avatar_url} 
+                            alt="User avatar"
+                            className="w-10 h-10 rounded-full mr-3 flex-shrink-0 object-cover"
+                        />
+                    ) : (
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 via-pink-500 to-orange-400 rounded-full mr-3 flex-shrink-0"></div>
+                    )}
                     <div>
                         <h1 className="text-lg font-semibold text-gray-900">{post.title}</h1>
                         <p className="text-xs text-gray-500">{formatDate(post.created_at)}</p>
@@ -141,43 +149,7 @@ const PostDetail = ({ postId }: PostDetailProps) => {
 
                 {/* Comments Section */}
                 <div className="px-4 pb-4 border-t border-gray-200">
-                    <CommentSection postId={0} />
-                    {/* Sample Comments */}
-                    <div className="space-y-3 mb-4">
-                        <div className="flex items-start gap-2">
-                            <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0"></div>
-                            <div className="flex-1">
-                                <p className="text-sm">
-                                    <span className="font-semibold mr-2">user123</span>
-                                    <span className="text-gray-700">Great post! Really enjoyed this.</span>
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">2h</p>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-start gap-2">
-                            <div className="w-8 h-8 bg-gray-300 rounded-full flex-shrink-0"></div>
-                            <div className="flex-1">
-                                <p className="text-sm">
-                                    <span className="font-semibold mr-2">developer456</span>
-                                    <span className="text-gray-700">Thanks for sharing this! 🔥</span>
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">1h</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Add Comment */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
-                        <input
-                            type="text"
-                            placeholder="Add a comment..."
-                            className="flex-1 text-sm outline-none"
-                        />
-                        <button className="text-sm font-semibold text-blue-500 hover:text-blue-700">
-                            Post
-                        </button>
-                    </div>
+                    <CommentSection postId={postId} />
                 </div>
             </div>
         </div>
