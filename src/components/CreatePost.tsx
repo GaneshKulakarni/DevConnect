@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase-client';
 import { useAuth } from '../context/AuthContext';
 import type { Community } from './CommunityList';
+import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface PostInput {
     title: string;
@@ -63,16 +64,16 @@ const CreatePost = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [communityId, setCommunityId] = useState<number | null>(null);
     const {user} = useAuth();
 
-    // Fetch communities
     const { data: communities, isLoading: communitiesLoading, isError: communitiesError } = useQuery<Community[], Error>({
         queryKey: ['communities'],
         queryFn: fetchCommunities
     });
 
-    const {mutate, isPending, error} = useMutation({
+    const {mutate, isPending, error, isSuccess} = useMutation({
         mutationFn: (data: {post: PostInput, imageFile: File | null}) => {
             return uploadPost(data.post, data.imageFile);
         },
@@ -80,9 +81,12 @@ const CreatePost = () => {
             setTitle('');
             setContent('');
             setImageFile(null);
+            setImagePreview(null);
             setCommunityId(null);
             queryClient.invalidateQueries({queryKey: ['posts']});
-            alert('Post created successfully!');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
         }
     })
 
@@ -96,6 +100,11 @@ const CreatePost = () => {
         
         if (!imageFile) {
             alert('Please select an image');
+            return;
+        }
+
+        if (!title.trim() || !content.trim()) {
+            alert('Please fill in all fields');
             return;
         }
         
@@ -112,7 +121,15 @@ const CreatePost = () => {
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setImageFile(e.target.files[0]);
+            const file = e.target.files[0];
+            setImageFile(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     }
 
@@ -122,104 +139,174 @@ const CreatePost = () => {
     }
 
     return (
-        <form className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md"
-              onSubmit={handleSubmit}>
-            <h2 className="text-3xl font-bold mb-6">Create a New Post</h2>
-            
-            {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">{error.message}</div>}
-            
-            {/* Show current user avatar for confirmation */}
-            {(user?.user_metadata?.avatar_url || user?.identities?.[0]?.identity_data?.avatar_url) && (
-                <div className="mb-4 flex items-center gap-3 p-3 bg-gray-50 rounded-md">
-                    <img 
-                        src={user?.user_metadata?.avatar_url || user?.identities?.[0]?.identity_data?.avatar_url} 
-                        alt="Your avatar"
-                        className="w-12 h-12 rounded-full"
-                    />
-                    <div>
-                        <p className="text-sm font-medium text-gray-700">Posting as</p>
-                        <p className="text-sm text-gray-600">{user.user_metadata?.user_name || user.email}</p>
-                    </div>
+        <div className="min-h-screen bg-slate-950 pt-16">
+            {/* Header */}
+            <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-8">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 className="text-4xl font-bold text-white mb-2">Create a Post</h1>
+                    <p className="text-gray-400">Share your ideas with the community</p>
                 </div>
-            )}
-            
-            <div className="mb-4">
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                    Title
-                </label>
-                <input
-                    type="text"
-                    id="title"
-                    value={title}
-                    className="border border-gray-300 p-2 w-full rounded-md"
-                    placeholder="Enter post title"
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                />
             </div>
 
-            <div className="mb-4">
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                    Content
-                </label>
-                <textarea
-                    id="content"
-                    value={content}
-                    className="border border-gray-300 p-2 w-full rounded-md"
-                    rows={5}
-                    placeholder="Enter post content"
-                    onChange={(e) => setContent(e.target.value)}
-                    required
-                />
+            {/* Content */}
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <form onSubmit={handleSubmit} className="bg-slate-900/50 border border-slate-800 rounded-lg p-8 space-y-6">
+                    
+                    {/* Success Message */}
+                    {isSuccess && (
+                        <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg flex items-center gap-3">
+                            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                            <span className="text-green-400">Post created successfully! Redirecting...</span>
+                        </div>
+                    )}
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-red-400 font-semibold">Error creating post</p>
+                                <p className="text-red-300 text-sm">{error.message}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* User Info */}
+                    {user?.user_metadata?.avatar_url && (
+                        <div className="flex items-center gap-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+                            <img 
+                                src={user.user_metadata.avatar_url}
+                                alt="Your avatar"
+                                className="w-10 h-10 rounded-full ring-2 ring-cyan-500/50"
+                            />
+                            <div>
+                                <p className="text-sm font-semibold text-gray-300">Posting as</p>
+                                <p className="text-sm text-gray-400">{user.user_metadata?.user_name || user.email}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Title */}
+                    <div>
+                        <label htmlFor="title" className="block text-sm font-semibold text-white mb-2">
+                            Title
+                        </label>
+                        <input
+                            type="text"
+                            id="title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition"
+                            placeholder="What's your post about?"
+                            required
+                            disabled={isPending}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Keep it short and descriptive</p>
+                    </div>
+
+                    {/* Content */}
+                    <div>
+                        <label htmlFor="content" className="block text-sm font-semibold text-white mb-2">
+                            Content
+                        </label>
+                        <textarea
+                            id="content"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition resize-none"
+                            rows={5}
+                            placeholder="Share your thoughts, experiences, or insights..."
+                            required
+                            disabled={isPending}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Write something meaningful</p>
+                    </div>
+
+                    {/* Community Selection */}
+                    <div>
+                        <label htmlFor="community" className="block text-sm font-semibold text-white mb-2">
+                            Community (Optional)
+                        </label>
+                        <select
+                            id="community"
+                            value={communityId || ''}
+                            onChange={handleCommunityChange}
+                            disabled={communitiesLoading || isPending}
+                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition"
+                        >
+                            <option value="">
+                                {communitiesLoading ? 'Loading communities...' : 'Select a community (optional)'}
+                            </option>
+                            {communities?.map((community) => (
+                                <option key={community.id} value={community.id}>
+                                    {community.name}
+                                </option>
+                            ))}
+                        </select>
+                        {communitiesError && (
+                            <p className="text-sm text-red-400 mt-1">Error loading communities</p>
+                        )}
+                    </div>
+
+                    {/* Image Upload */}
+                    <div>
+                        <label htmlFor="image" className="block text-sm font-semibold text-white mb-2">
+                            Cover Image
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                id="image"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                disabled={isPending}
+                                className="hidden"
+                            />
+                            <label 
+                                htmlFor="image"
+                                className="flex items-center justify-center w-full p-6 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-500/5 transition"
+                            >
+                                <div className="text-center">
+                                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                    <p className="text-sm font-medium text-white">Click to upload image</p>
+                                    <p className="text-xs text-gray-500 mt-1">or drag and drop</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Image Preview */}
+                        {imagePreview && (
+                            <div className="mt-4">
+                                <p className="text-xs text-gray-500 mb-2">Preview:</p>
+                                <img 
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    className="w-full h-48 object-cover rounded-lg border border-slate-700"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <button 
+                        type="submit" 
+                        disabled={isPending || isSuccess}
+                        className="w-full px-6 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-600/50 text-white font-semibold rounded-lg transition-colors duration-300"
+                    >
+                        {isPending ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Creating...
+                            </span>
+                        ) : isSuccess ? (
+                            "Post Created!"
+                        ) : (
+                            "Create Post"
+                        )}
+                    </button>
+                </form>
             </div>
-
-            <div className="mb-4">
-                <label htmlFor="community" className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Community (optional)
-                </label>
-                <select
-                    id="community"
-                    value={communityId || ''}
-                    className="border border-gray-300 p-2 w-full rounded-md"
-                    onChange={handleCommunityChange}
-                    disabled={communitiesLoading}
-                >
-                    <option value="">
-                        {communitiesLoading ? 'Loading communities...' : '-- Choose a community --'}
-                    </option>
-                    {communities?.map((community) => (
-                        <option key={community.id} value={community.id}>
-                            {community.name}
-                        </option>
-                    ))}
-                </select>
-                {communitiesError && (
-                    <p className="text-sm text-red-600 mt-1">Error loading communities</p>
-                )}
-            </div>  
-
-            <div className="mb-4">
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Image
-                </label>
-                <input
-                    type="file"
-                    id="image"
-                    accept="image/*"
-                    className="border border-gray-300 p-2 w-full rounded-md"
-                    onChange={handleFileChange}
-                    required
-                /> 
-            </div>
-
-            <button 
-                type="submit" 
-                disabled={isPending}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md text-white font-medium transition"
-            >
-                {isPending ? 'Creating...' : 'Create Post'}
-            </button>
-        </form>
+        </div>
     );
 }
 
