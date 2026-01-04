@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../supabase-client";
-import { Github, Book, Code, Star, ExternalLink, User, RefreshCw } from "lucide-react";
+import { Github, Book, Code, Star, ExternalLink, User, RefreshCw, Globe, GraduationCap, FileText, Save, X as XIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 
@@ -22,6 +22,9 @@ interface Profile {
   repos_count: number;
   famous_repos: FamousRepo[];
   most_used_languages: string[];
+  portfolio_url?: string;
+  learning_now?: string;
+  resume_url?: string;
 }
 
 const DUMMY_PROFILES: Record<string, Profile> = {
@@ -92,13 +95,49 @@ const ProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const { user, syncProfile } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    portfolio_url: "",
+    learning_now: "",
+    resume_url: ""
+  });
 
   const { data: profile, isLoading, error, refetch } = useQuery({
     queryKey: ["profile", id],
     queryFn: () => fetchProfile(id!),
     enabled: !!id,
-    retry: 1,
+    onSuccess: (data) => {
+      if (data) {
+        setEditForm({
+          portfolio_url: data.portfolio_url || "",
+          learning_now: data.learning_now || "",
+          resume_url: data.resume_url || ""
+        });
+      }
+    }
   });
+
+  const handleSaveExtras = async () => {
+    if (!user || user.id !== id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          portfolio_url: editForm.portfolio_url,
+          learning_now: editForm.learning_now,
+          resume_url: editForm.resume_url
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      setIsEditing(false);
+      refetch();
+    } catch (err: any) {
+      console.error("Error saving profile extras:", err);
+      alert(`Save failed: ${err.message}`);
+    }
+  };
 
   const handleManualSync = async () => {
     if (!user) return;
@@ -211,6 +250,7 @@ const ProfilePage = () => {
                     {profile.full_name}
                 </h1>
                 {isOwnProfile && (
+                  <div className="flex gap-2">
                     <button 
                         onClick={handleManualSync}
                         className="inline-flex items-center gap-2 text-xs bg-cyan-950/50 text-cyan-400 hover:bg-cyan-900/50 px-2 py-1 rounded border border-cyan-900/30 transition w-fit"
@@ -219,6 +259,15 @@ const ProfilePage = () => {
                         <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
                         Sync Data
                     </button>
+                    {!isEditing && (
+                      <button 
+                          onClick={() => setIsEditing(true)}
+                          className="inline-flex items-center gap-2 text-xs bg-slate-800 text-gray-300 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700 transition w-fit"
+                      >
+                          Edit Links
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               <p className="text-cyan-400 font-mono mb-4 text-lg">@{profile.username}</p>
@@ -292,6 +341,111 @@ const ProfilePage = () => {
 
           {/* Sidebar: Languages & Tech */}
           <div className="space-y-8">
+            {/* New Section: Professional Links & Status */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 text-cyan-400 font-mono uppercase tracking-widest text-sm">
+                  <User className="w-4 h-4" />
+                  <span>Dev Status</span>
+                </div>
+                {isEditing && (
+                  <div className="flex gap-2">
+                    <button onClick={() => setIsEditing(false)} className="text-red-400 hover:text-red-300">
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                    <button onClick={handleSaveExtras} className="text-green-400 hover:text-green-300">
+                      <Save className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-xl space-y-6">
+                {/* Learning Now */}
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-gray-500 mb-2 uppercase">
+                    <GraduationCap className="w-3 h-3" />
+                    <span>Currently Learning</span>
+                  </div>
+                  {isEditing ? (
+                    <input 
+                      type="text"
+                      value={editForm.learning_now}
+                      onChange={(e) => setEditForm({...editForm, learning_now: e.target.value})}
+                      placeholder="e.g. Rust, Advanced React..."
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-cyan-400 focus:outline-none focus:border-cyan-900/50"
+                    />
+                  ) : (
+                    <p className="text-gray-300 font-mono text-sm">
+                      {profile.learning_now || "Nothing specified yet."}
+                    </p>
+                  )}
+                </div>
+
+                {/* Portfolio */}
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-gray-500 mb-2 uppercase">
+                    <Globe className="w-3 h-3" />
+                    <span>Portfolio</span>
+                  </div>
+                  {isEditing ? (
+                    <input 
+                      type="url"
+                      value={editForm.portfolio_url}
+                      onChange={(e) => setEditForm({...editForm, portfolio_url: e.target.value})}
+                      placeholder="https://yourportfolio.com"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-cyan-400 focus:outline-none focus:border-cyan-900/50"
+                    />
+                  ) : (
+                    profile.portfolio_url ? (
+                      <a 
+                        href={profile.portfolio_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-cyan-400 hover:underline text-sm font-mono flex items-center gap-1"
+                      >
+                        {new URL(profile.portfolio_url).hostname}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <p className="text-gray-500 italic text-sm font-mono">No portfolio link added.</p>
+                    )
+                  )}
+                </div>
+
+                {/* Resume */}
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-gray-500 mb-2 uppercase">
+                    <FileText className="w-3 h-3" />
+                    <span>Resume</span>
+                  </div>
+                  {isEditing ? (
+                    <input 
+                      type="url"
+                      value={editForm.resume_url}
+                      onChange={(e) => setEditForm({...editForm, resume_url: e.target.value})}
+                      placeholder="Link to your PDF resume"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-cyan-400 focus:outline-none focus:border-cyan-900/50"
+                    />
+                  ) : (
+                    profile.resume_url ? (
+                      <a 
+                        href={profile.resume_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-gray-300 px-3 py-2 rounded border border-slate-700 transition text-sm font-mono"
+                      >
+                        <FileText className="w-4 h-4 text-cyan-400" />
+                        <span>View Resume</span>
+                      </a>
+                    ) : (
+                      <p className="text-gray-500 italic text-sm font-mono">No resume uploaded.</p>
+                    )
+                  )}
+                </div>
+              </div>
+            </section>
+
             <section>
               <div className="flex items-center gap-2 text-cyan-400 font-mono mb-6 uppercase tracking-widest text-sm">
                 <Code className="w-4 h-4" />
