@@ -1,11 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Post } from "./PostList";
-import { supabase } from "../supabase-client";
 import PostItem from "./PostItem";
-
-interface Props {
-  communityId: number;
-}
+import { fetchCommunityPost } from "../utils/communityPosts";
 
 interface PostWithCommunity extends Post {
   communities: { 
@@ -13,18 +9,9 @@ interface PostWithCommunity extends Post {
   };
 }
 
-export const fetchCommunityPost = async (
-  communityId: number
-): Promise<PostWithCommunity[]> => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*, communities(name)")
-    .eq("community_id", communityId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-  return data as PostWithCommunity[]; 
-};
+interface Props {
+  communityId: number;
+}
 
 export const CommunityDisplay = ({ communityId }: Props) => {
   const { data, error, isLoading } = useQuery<PostWithCommunity[], Error>({

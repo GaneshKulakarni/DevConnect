@@ -17,6 +17,13 @@ interface Person {
   avatar_url?: string | null;
 }
 
+interface ProfileData {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+}
+
 interface SearchResult {
   communities: Community[];
   people: Person[];
@@ -123,7 +130,7 @@ const searchAll = async (q: string): Promise<SearchResult> => {
         if (profilesRes.value.error) {
             console.error("Profiles search error:", profilesRes.value.error);
         } else {
-            const profs = profilesRes.value.data as any[];
+            const profs = profilesRes.value.data as ProfileData[];
             people = profs.map((p) => ({
                 id: p.id,
                 name: p.full_name || p.username || "Unknown",
@@ -142,7 +149,7 @@ const searchAll = async (q: string): Promise<SearchResult> => {
     });
 
     return { communities: mergedCommunities, people: mergedPeople };
-  } catch (err) {
+  } catch {
     return { communities: filteredDummyCommunities, people: filteredDummyPeople };
   }
 };

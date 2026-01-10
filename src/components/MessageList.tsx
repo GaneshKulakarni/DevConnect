@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useMessageReactions } from '../hooks/useMessaging';
-import { Reply, Edit, Trash2, Pin, MoreVertical, Download, ExternalLink } from 'lucide-react';
+import { Reply, Edit, Trash2, Download, ExternalLink } from 'lucide-react';
 import type { Message } from '../types/messaging';
 
 interface MessageListProps {
@@ -11,7 +11,6 @@ interface MessageListProps {
 const MessageList = ({ messages }: MessageListProps) => {
   const { user } = useAuth();
   const { addReaction, removeReaction } = useMessageReactions();
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<number | null>(null);
 
   const formatMessageTime = (timestamp: string) => {

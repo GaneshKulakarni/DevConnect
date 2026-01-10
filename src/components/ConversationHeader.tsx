@@ -16,10 +16,13 @@ const ConversationHeader = ({ conversation }: ConversationHeaderProps) => {
     
     // For direct messages, show the other participant's name
     const otherParticipant = conversation.participants?.find(p => p.user_id !== user?.id);
-    return otherParticipant?.user?.user_metadata?.full_name || 
-           otherParticipant?.user?.user_metadata?.user_name || 
-           otherParticipant?.user?.email || 
-           'Unknown User';
+    if (otherParticipant) {
+      return otherParticipant.user?.user_metadata?.full_name || 
+             otherParticipant.user?.user_metadata?.user_name || 
+             otherParticipant.user?.email || 
+             'Unknown User';
+    }
+    return 'Unknown User';
   };
 
   const getConversationStatus = () => {
@@ -30,7 +33,10 @@ const ConversationHeader = ({ conversation }: ConversationHeaderProps) => {
     
     // For direct messages, show online status
     const otherParticipant = conversation.participants?.find(p => p.user_id !== user?.id);
-    return 'Online'; // This would be dynamic based on presence
+    if (otherParticipant) {
+      return 'Online'; // This would be dynamic based on presence
+    }
+    return 'Offline';
   };
 
   const getConversationAvatar = () => {
@@ -56,15 +62,15 @@ const ConversationHeader = ({ conversation }: ConversationHeaderProps) => {
           <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full" />
         </div>
       );
+    } else if (otherParticipant) {
+      return (
+        <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
+          <span className="text-sm text-gray-300">
+            {getConversationName()[0]?.toUpperCase()}
+          </span>
+        </div>
+      );
     }
-    
-    return (
-      <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
-        <span className="text-sm text-gray-300">
-          {getConversationName()[0]?.toUpperCase()}
-        </span>
-      </div>
-    );
   };
 
   return (
